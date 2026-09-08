@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Bar, BarChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { RefreshCw, Settings2 } from 'lucide-react'
 import { demoSalesRows, type SalesRow } from './lib/sales-data'
+import superbLogo from './assets/Superb_logo/superb.jpeg'
 import './App.css'
 
 const fmt = new Intl.NumberFormat('en-IN')
@@ -42,7 +43,7 @@ export default function App() {
     return <article className="metric" key={metric.key}><p>{metric.label}</p><strong>{fmt.format(value)} {metric.unit && <small>{metric.unit}</small>}</strong><div><span className={delta < 0 ? 'negative' : ''}>{delta < 0 ? '▼' : '▲'} {Math.abs(delta).toFixed(2)}%</span><em>vs {fmt.format(old)} ({previous.month})</em></div></article>
   })
   return <main className="dashboard">
-    <header className="hero"><h1><em>Amber</em> {reportPeriod} Sales Report</h1><p>Performance summary · {reportPeriod}</p></header>
+    <header className="hero"><img className="brand-logo" src={superbLogo} alt="Superb Realty" /><h1><em>Amber</em> {reportPeriod} Sales Report</h1><p>Performance summary · {reportPeriod}</p></header>
     <div className="toolbar"><span><i className={live ? 'lamp live' : 'lamp'} />{status}</span><div><button onClick={refresh}><RefreshCw size={15} />Refresh</button><span className="private"><Settings2 size={15} />Private connection</span></div></div>
     <section className="metrics">{metricCards}</section>
     <h2 className="section-title">Monthly Trends</h2>
