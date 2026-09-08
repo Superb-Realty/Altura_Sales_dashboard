@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Bar, BarChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
-import { RefreshCw, Settings2 } from 'lucide-react'
+import { Moon, RefreshCw, Settings2, Sun } from 'lucide-react'
 import { demoSalesRows, type SalesRow } from './lib/sales-data'
 import superbLogo from './assets/Superb_logo/superb.jpeg'
 import './App.css'
@@ -21,6 +21,11 @@ const monthOnly = (value: string | number) => {
 export default function App() {
   const [rows, setRows] = useState<SalesRow[]>(demoSalesRows)
   const [live, setLive] = useState(false)
+  const [darkMode, setDarkMode] = useState(() => localStorage.getItem('amber-theme') === 'dark')
+  useEffect(() => {
+    document.documentElement.dataset.theme = darkMode ? 'dark' : 'light'
+    localStorage.setItem('amber-theme', darkMode ? 'dark' : 'light')
+  }, [darkMode])
   const [status, setStatus] = useState('Connecting to your secure data source…')
   const refresh = async () => {
     try {
@@ -44,7 +49,7 @@ export default function App() {
   })
   return <main className="dashboard">
     <header className="hero"><img className="brand-logo" src={superbLogo} alt="Superb Realty" /><h1><em>Amber</em> {reportPeriod} Sales Report</h1><p>Performance summary · {reportPeriod}</p></header>
-    <div className="toolbar"><span><i className={live ? 'lamp live' : 'lamp'} />{status}</span><div><button onClick={refresh}><RefreshCw size={15} />Refresh</button><span className="private"><Settings2 size={15} />Private connection</span></div></div>
+    <div className="toolbar"><span><i className={live ? 'lamp live' : 'lamp'} />{status}</span><div><button onClick={() => setDarkMode((value) => !value)} aria-label={`Switch to ${darkMode ? 'light' : 'dark'} theme`} title={`Switch to ${darkMode ? 'light' : 'dark'} theme`}>{darkMode ? <Sun size={15} /> : <Moon size={15} />}{darkMode ? 'Light' : 'Dark'}</button><button onClick={refresh}><RefreshCw size={15} />Refresh</button><span className="private"><Settings2 size={15} />Private connection</span></div></div>
     <section className="metrics">{metricCards}</section>
     <h2 className="section-title">Monthly Trends</h2>
     <section className="charts">

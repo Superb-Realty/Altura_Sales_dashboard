@@ -17,7 +17,7 @@ const connectionDiagnostic = (error: unknown) => {
   const message = responseError?.message || (error as { message?: string })?.message || ''
   const status = responseError?.status || String((error as { status?: number })?.status || '')
 
-  if (/parse range/i.test(message)) return 'Google Sheet tab/range was not found. Set range to \'Sales Funnel\'!A:E.'
+  if (/parse range/i.test(message)) return 'Google Sheet tab/range was not found. Ensure GOOGLE_SHEET_RANGE (or GOOGLE_SHEETS_CONFIG.range) exactly matches the worksheet tab name, for example Sales_Funnel!A:E.'
   if (status === 'PERMISSION_DENIED' || /permission|not have permission|forbidden/i.test(message)) return 'Google denied access. Share the sheet with the service-account email as a Viewer.'
   if (status === 'NOT_FOUND' || /not found/i.test(message)) return 'Google could not find this spreadsheet. Check the sheet_id in GOOGLE_SHEETS_CONFIG.'
   if (/api.*not.*enabled|has not been used/i.test(message)) return 'Enable Google Sheets API in the Google Cloud project that owns the service account.'
@@ -31,7 +31,10 @@ async function handleSalesRequest(request: Request) {
   const email = combinedConfig.client_email || process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL
   const privateKey = (combinedConfig.private_key || process.env.GOOGLE_PRIVATE_KEY)?.replace(/\\n/g, '\n')
   const sheetId = combinedConfig.sheet_id || process.env.GOOGLE_SHEET_ID
-  const range = combinedConfig.range || process.env.GOOGLE_SHEET_RANGE || 'Sales!A:E'
+  // A dedicated environment variable is the intentional override for the range
+  // contained in GOOGLE_SHEETS_CONFIG. This also allows changing a tab name
+  // without replacing credentials stored in the JSON configuration.
+  const range = process.env.GOOGLE_SHEET_RANGE || combinedConfig.range || 'Sales!A:E'
   if (!email || !privateKey || !sheetId) return Response.json({ error: 'Server data source is not configured.' }, { status: 503 })
   try {
     const auth = new google.auth.JWT({ email, key: privateKey, scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'] })
