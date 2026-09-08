@@ -12,6 +12,18 @@ const chronologicalValue = (month: string) => {
   return Number.isNaN(timestamp) ? Number.MAX_SAFE_INTEGER : timestamp
 }
 
+const connectionDiagnostic = (error: unknown) => {
+  const responseError = (error as { response?: { data?: { error?: { message?: string; status?: string } } } })?.response?.data?.error
+  const message = responseError?.message || (error as { message?: string })?.message || ''
+  const status = responseError?.status || String((error as { status?: number })?.status || '')
+
+  if (/parse range/i.test(message)) return 'Google Sheet tab/range was not found. Set range to \'Sales Funnel\'!A:E.'
+  if (status === 'PERMISSION_DENIED' || /permission|not have permission|forbidden/i.test(message)) return 'Google denied access. Share the sheet with the service-account email as a Viewer.'
+  if (status === 'NOT_FOUND' || /not found/i.test(message)) return 'Google could not find this spreadsheet. Check the sheet_id in GOOGLE_SHEETS_CONFIG.'
+  if (/api.*not.*enabled|has not been used/i.test(message)) return 'Enable Google Sheets API in the Google Cloud project that owns the service account.'
+  return 'Unable to load sales data. Open the Vercel Function Logs for the Google error.'
+}
+
 async function handleSalesRequest(request: Request) {
   if (request.method !== 'GET') return new Response('Method not allowed', { status: 405, headers: { Allow: 'GET' } })
   let combinedConfig: GoogleSheetsConfig = {}
@@ -31,7 +43,10 @@ async function handleSalesRequest(request: Request) {
     const rows: SalesRow[] = records.map((record) => ({ month: String(read(record, ['month', 'period']) ?? ''), meetings: number(read(record, ['cpmeetings', 'meetings'])), visits: number(read(record, ['totalvisits', 'visits'])), units: number(read(record, ['eoiunits', 'units'])), area: number(read(record, ['eoiarea', 'area'])) })).filter((row) => row.month)
     rows.sort((left, right) => chronologicalValue(left.month) - chronologicalValue(right.month))
     return Response.json({ rows }, { headers: { 'Cache-Control': 's-maxage=60, stale-while-revalidate=120' } })
-  } catch (error) { console.error('Google Sheets request failed', error); return Response.json({ error: 'Unable to load sales data.' }, { status: 502 }) }
+  } catch (error) {
+    console.error('Google Sheets request failed', error)
+    return Response.json({ error: connectionDiagnostic(error) }, { status: 502 })
+  }
 }
 
 export default { fetch: handleSalesRequest }
