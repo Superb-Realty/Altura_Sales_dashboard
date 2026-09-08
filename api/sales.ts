@@ -4,6 +4,7 @@ import { config } from 'dotenv'
 config({ path: '.env.local', quiet: true })
 
 type SalesRow = { month: string; meetings: number; visits: number; units: number; area: number }
+type GoogleSheetsConfig = { client_email?: string; private_key?: string; sheet_id?: string; range?: string }
 const normalize = (value: string) => value.toLowerCase().replace(/[^a-z0-9]/g, '')
 const number = (value: unknown) => Number(String(value ?? '').replace(/,/g, '')) || 0
 const chronologicalValue = (month: string) => {
@@ -13,10 +14,12 @@ const chronologicalValue = (month: string) => {
 
 async function handleSalesRequest(request: Request) {
   if (request.method !== 'GET') return new Response('Method not allowed', { status: 405, headers: { Allow: 'GET' } })
-  const email = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL
-  const privateKey = process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n')
-  const sheetId = process.env.GOOGLE_SHEET_ID
-  const range = process.env.GOOGLE_SHEET_RANGE || 'Sales!A:E'
+  let combinedConfig: GoogleSheetsConfig = {}
+  try { if (process.env.GOOGLE_SHEETS_CONFIG) combinedConfig = JSON.parse(process.env.GOOGLE_SHEETS_CONFIG) as GoogleSheetsConfig } catch { return Response.json({ error: 'GOOGLE_SHEETS_CONFIG is not valid JSON.' }, { status: 503 }) }
+  const email = combinedConfig.client_email || process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL
+  const privateKey = (combinedConfig.private_key || process.env.GOOGLE_PRIVATE_KEY)?.replace(/\\n/g, '\n')
+  const sheetId = combinedConfig.sheet_id || process.env.GOOGLE_SHEET_ID
+  const range = combinedConfig.range || process.env.GOOGLE_SHEET_RANGE || 'Sales!A:E'
   if (!email || !privateKey || !sheetId) return Response.json({ error: 'Server data source is not configured.' }, { status: 503 })
   try {
     const auth = new google.auth.JWT({ email, key: privateKey, scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'] })
