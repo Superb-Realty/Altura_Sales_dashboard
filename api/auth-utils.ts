@@ -1,4 +1,9 @@
-import { google } from 'googleapis'
+import { OAuth2Client } from 'google-auth-library'
+import { config } from 'dotenv'
+
+// Vercel supplies environment variables in deployment. Loading this file also
+// makes the same configuration available when the functions run locally.
+config({ path: '.env.local', quiet: true })
 
 const unauthorized = (message = 'Authentication is required.') => Response.json({ error: message }, { status: 401, headers: { 'Cache-Control': 'no-store' } })
 const configuredEmails = () => new Set((process.env.ALLOWED_GOOGLE_EMAILS || '').split(',').map((email) => email.trim().toLowerCase()).filter(Boolean))
@@ -11,7 +16,7 @@ export async function authenticate(request: Request): Promise<AuthenticatedUser 
   if (!clientId || !allowedEmails.size) return unauthorized('Authentication is not configured.')
   if (!token) return unauthorized()
   try {
-    const ticket = await new google.auth.OAuth2(clientId).verifyIdToken({ idToken: token, audience: clientId })
+    const ticket = await new OAuth2Client(clientId).verifyIdToken({ idToken: token, audience: clientId })
     const payload = ticket.getPayload()
     const email = payload?.email?.toLowerCase()
     if (!email || !payload.email_verified || !allowedEmails.has(email)) return unauthorized('This Google account is not authorized to access the dashboard.')
