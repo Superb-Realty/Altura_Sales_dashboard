@@ -1,4 +1,4 @@
-import { authenticate } from './auth-utils'
+import { authenticate } from './auth-utils.js'
 
 async function handleAuthRequest(request: Request) {
   if (request.method !== 'GET') return new Response('Method not allowed', { status: 405, headers: { Allow: 'GET' } })

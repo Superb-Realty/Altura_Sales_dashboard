@@ -1,6 +1,6 @@
 import { google } from 'googleapis'
 import { config } from 'dotenv'
-import { authenticate } from './auth-utils'
+import { authenticate } from './auth-utils.js'
 
 config({ path: '.env.local', quiet: true })
 
