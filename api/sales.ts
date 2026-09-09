@@ -1,5 +1,6 @@
 import { google } from 'googleapis'
 import { config } from 'dotenv'
+import { authenticate } from './auth-utils'
 
 config({ path: '.env.local', quiet: true })
 
@@ -26,6 +27,8 @@ const connectionDiagnostic = (error: unknown) => {
 
 async function handleSalesRequest(request: Request) {
   if (request.method !== 'GET') return new Response('Method not allowed', { status: 405, headers: { Allow: 'GET' } })
+  const user = await authenticate(request)
+  if (user instanceof Response) return user
   let combinedConfig: GoogleSheetsConfig = {}
   try { if (process.env.GOOGLE_SHEETS_CONFIG) combinedConfig = JSON.parse(process.env.GOOGLE_SHEETS_CONFIG) as GoogleSheetsConfig } catch { return Response.json({ error: 'GOOGLE_SHEETS_CONFIG is not valid JSON.' }, { status: 503 }) }
   const email = combinedConfig.client_email || process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL
@@ -45,7 +48,8 @@ async function handleSalesRequest(request: Request) {
     const read = (record: unknown[], aliases: string[]) => record[columns.findIndex((column) => aliases.includes(column))]
     const rows: SalesRow[] = records.map((record) => ({ month: String(read(record, ['month', 'period']) ?? ''), meetings: number(read(record, ['cpmeetings', 'meetings'])), visits: number(read(record, ['totalvisits', 'visits'])), units: number(read(record, ['eoiunits', 'units'])), area: number(read(record, ['eoiarea', 'area'])) })).filter((row) => row.month)
     rows.sort((left, right) => chronologicalValue(left.month) - chronologicalValue(right.month))
-    return Response.json({ rows }, { headers: { 'Cache-Control': 's-maxage=60, stale-while-revalidate=120' } })
+    // Never place private dashboard data in a shared CDN cache.
+    return Response.json({ rows }, { headers: { 'Cache-Control': 'private, no-store' } })
   } catch (error) {
     console.error('Google Sheets request failed', error)
     return Response.json({ error: connectionDiagnostic(error) }, { status: 502 })

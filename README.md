@@ -1,3 +1,19 @@
+# Amber Sales Dashboard
+
+## Google sign-in access control
+
+The dashboard and `/api/sales` are protected by a verified Google ID token. Add these values to `.env.local` for local development and to the Vercel project environment variables for every deployed environment:
+
+```dotenv
+VITE_GOOGLE_CLIENT_ID=your-google-oauth-web-client-id.apps.googleusercontent.com
+GOOGLE_CLIENT_ID=your-google-oauth-web-client-id.apps.googleusercontent.com
+ALLOWED_GOOGLE_EMAILS=owner@example.com,viewer@example.com
+```
+
+Create a **Web application** OAuth client in Google Cloud and add your local URL (for example `http://localhost:5173`) and the deployed Vercel URL under **Authorized JavaScript origins**. The two client ID values must be identical. Email matching is case-insensitive; add or remove comma-separated addresses to change who can access the dashboard.
+
+Keep the Sheets service-account credentials server-side only. Do not put them in a `VITE_` variable.
+
 # React + TypeScript + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
