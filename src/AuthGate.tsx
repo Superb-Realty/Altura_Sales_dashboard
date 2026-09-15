@@ -17,9 +17,9 @@ export default function AuthGate({ onAuthenticated }: Props) {
         setMessage('Verifying your access. This usually takes 5–10 seconds…')
         try {
           const response = await fetch('/api/auth', { headers: { Authorization: `Bearer ${credential}` }, cache: 'no-store' })
-          const result = await response.json() as { user?: User; error?: string }
-          if (!response.ok || !result.user) throw new Error(result.error || 'Unable to verify this account.')
-          onAuthenticated(credential, result.user)
+          const result = await response.json() as { user?: User; token?: string; error?: string }
+          if (!response.ok || !result.user || !result.token) throw new Error(result.error || 'Unable to verify this account.')
+          onAuthenticated(result.token, result.user)
         } catch (error) { setMessage(error instanceof Error ? error.message : 'Unable to verify this account.') }
       } })
       buttonRef.current.replaceChildren()

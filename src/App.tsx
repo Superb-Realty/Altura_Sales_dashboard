@@ -1,30 +1,75 @@
 import { useEffect, useState } from 'react'
-import { Bar, BarChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, LabelList, Line, LineChart, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { LogOut, Moon, RefreshCw, Sun } from 'lucide-react'
 import { demoSalesRows, type SalesRow } from './lib/sales-data'
 import superbLogo from './assets/Superb_logo/superb.jpeg'
 import AuthGate from './AuthGate'
 import './App.css'
+import './inventory.css'
 
 const fmt = new Intl.NumberFormat('en-IN')
-const metricDefs: { label: string; key: keyof Omit<SalesRow, 'month'>; unit?: string }[] = [
-  { label: 'CP Meetings', key: 'meetings' }, { label: 'Total Visits', key: 'visits' },
-  { label: 'EOI Units', key: 'units' }, { label: 'EOI Area', key: 'area', unit: 'sq ft' },
-]
-const lineLabel = { position: 'top' as const, offset: 12, fill: '#43297c', fontSize: 14, fontWeight: 700 }
-const chartMargin = { top: 18, right: 12, left: -16, bottom: 0 }
-const linePadding = { left: 18, right: 12 }
-const monthOnly = (value: string | number) => {
-  const date = new Date(value)
-  return Number.isNaN(date.getTime()) ? String(value).replace(/\s+\d{4}$/, '') : new Intl.DateTimeFormat('en', { month: 'short' }).format(date)
+type InventorySlice = { status: 'Booked' | 'EOI' | 'Blocked' | 'Open'; units: number; area: number }
+type EoiBookedRow = { month: string; units: number; area: number }
+type VisitTrend = { period: string; fresh: number; revisits: number }
+type MeetingTrend = { period: string; meetings: number; toDate?: number }
+type VisitsData = { siteVisits: VisitTrend[]; momVisits: VisitTrend[]; wowVisits: VisitTrend[]; cpMeetings: MeetingTrend[]; momCpMeetings: MeetingTrend[]; topCps: string[][] }
+type VerticalSplitRow = { metric: string; cpPercent: number; directPercent: number; cp: number; direct: number; cpLabel: string; directLabel: string }
+const lightInventoryColors = ['#8ecae6', '#f4d35e', '#86c96b', '#9b8de3']
+const darkInventoryColors = ['#7560b5', '#d7bd72', '#ad8359', '#8fb9a8']
+const demoInventory: InventorySlice[] = [{ status: 'Booked', units: 25, area: 20250 }, { status: 'EOI', units: 21, area: 21919 }, { status: 'Blocked', units: 12, area: 8871 }, { status: 'Open', units: 93, area: 89259 }]
+type Session = { token: string; user: { email: string; name: string }; createdAt: number }
+const SESSION_KEY = 'amber-dashboard-session'
+const SESSION_MAX_AGE = 24 * 60 * 60 * 1000
+const readSession = (): Session | null => {
+  try {
+    const saved = JSON.parse(localStorage.getItem(SESSION_KEY) || 'null') as Session | null
+    if (saved && Date.now() - saved.createdAt < SESSION_MAX_AGE) return saved
+    localStorage.removeItem(SESSION_KEY)
+  } catch { localStorage.removeItem(SESSION_KEY) }
+  return null
+}
+function FloorTable({ title, rows }: { title: string; rows: string[][] }) {
+  if (!rows.length) return null
+  const bookedPercentIndex = rows[0].findIndex((header) => header.trim().toLowerCase() === '% booked')
+  return <section className="floor-table-section"><h2 className="section-title">{title}</h2>{bookedPercentIndex >= 0 && <p className="table-insight"><span />Green indicates rows with more than 50% of area booked</p>}<div className="floor-table-wrap"><table className="floor-table"><thead><tr>{rows[0].map((cell, index) => <th key={`${cell}-${index}`}>{cell}</th>)}</tr></thead><tbody>{rows.slice(1).map((row, rowIndex) => <tr key={rowIndex} className={row[0]?.toLowerCase() === 'total' ? 'total-row' : ''}>{rows[0].map((_, index) => { const value = row[index] ?? '—'; const isStrongBooking = index === bookedPercentIndex && parseFloat(value) > 50; return <td key={index}>{index === 0 ? <span className="floor-label">{value}</span> : isStrongBooking ? <span className="performance-good">{value}</span> : value}</td> })}</tr>)}</tbody></table></div></section>
+}
+function VisitsAreaChart({ title, data }: { title: string; data: VisitTrend[] }) {
+  const key = title.toLowerCase().replace(/[^a-z0-9]/g, '-')
+  const visible = (value: unknown) => Number(value) === 0 ? '' : fmt.format(Number(value))
+  return <article><h3>{title}</h3><ResponsiveContainer width="100%" height={250}><AreaChart data={data} margin={{ top: 24, right: 12, left: -18, bottom: 6 }}><defs><linearGradient id={`fresh-${key}`} x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#8ecae6" stopOpacity={.8}/><stop offset="95%" stopColor="#8ecae6" stopOpacity={.08}/></linearGradient><linearGradient id={`revisit-${key}`} x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#9b8de3" stopOpacity={.72}/><stop offset="95%" stopColor="#9b8de3" stopOpacity={.06}/></linearGradient></defs><CartesianGrid vertical={false}/><XAxis dataKey="period" interval={0} tick={{ fontSize: 9 }}/><YAxis/><Tooltip/><Area type="monotone" dataKey="fresh" name="Fresh Visits" stroke="#579fc2" strokeWidth={2.5} fill={`url(#fresh-${key})`}><LabelList dataKey="fresh" position="top" formatter={visible} className="chart-value fresh-value"/></Area><Area type="monotone" dataKey="revisits" name="Re-visits" stroke="#7b68cc" strokeWidth={2.5} fill={`url(#revisit-${key})`}><LabelList dataKey="revisits" position="bottom" formatter={visible} className="chart-value revisit-value"/></Area></AreaChart></ResponsiveContainer><p className="legend visits-legend"><span>● Fresh Visits</span><span>● Re-visits</span></p></article>
+}
+function MeetingsLineChart({ title, data, showToDate = false }: { title: string; data: MeetingTrend[]; showToDate?: boolean }) {
+  return <article><h3>{title}</h3><ResponsiveContainer width="100%" height={250}><LineChart data={data} margin={{ top: 28, right: 15, left: -10, bottom: 4 }}><CartesianGrid vertical={false}/><XAxis dataKey="period"/><YAxis/><Tooltip/><Line type="monotone" dataKey="meetings" name="Meetings" stroke="#43297c" strokeWidth={3} dot={{ r: 4 }}><LabelList dataKey="meetings" position="top" className="chart-value meetings-value"/></Line>{showToDate && <Line type="monotone" dataKey="toDate" name="Meetings to date" stroke="#86c96b" strokeWidth={2.5} dot={{ r: 3 }}><LabelList dataKey="toDate" position="bottom" className="chart-value to-date-value"/></Line>}</LineChart></ResponsiveContainer></article>
+}
+function VisitsKpis({ data }: { data: VisitsData }) {
+  const latestVisits = data.momVisits.at(-1), previousVisits = data.momVisits.at(-2)
+  const latestMeetings = data.momCpMeetings.at(-1), previousMeetings = data.momCpMeetings.at(-2)
+  const visitValue = (latestVisits?.fresh ?? 0) + (latestVisits?.revisits ?? 0)
+  const previousVisitValue = (previousVisits?.fresh ?? 0) + (previousVisits?.revisits ?? 0)
+  const change = (value: number, previous: number) => previous ? ((value - previous) / previous) * 100 : 0
+  const cards = [
+    { title: 'Total Visits', value: visitValue, previous: previousVisitValue, previousLabel: previousVisits?.period, breakdown: data.siteVisits.map((row) => ({ label: row.period, value: row.fresh + row.revisits })) },
+    { title: 'CP Meetings', value: latestMeetings?.meetings ?? 0, previous: previousMeetings?.meetings ?? 0, previousLabel: previousMeetings?.period, breakdown: data.cpMeetings.map((row) => ({ label: row.period, value: row.meetings })) },
+  ]
+  return <section className="visits-kpis">{cards.map((card) => { const delta = change(card.value, card.previous); return <article key={card.title}><div className="kpi-primary"><p>{card.title}</p><strong>{fmt.format(card.value)}</strong><span className={delta < 0 ? 'down' : 'up'}>{delta < 0 ? '▼' : '▲'} {Math.abs(delta).toFixed(2)}%</span><small>vs {fmt.format(card.previous)} ({card.previousLabel})</small></div><div className="kpi-breakdown">{card.breakdown.map((item) => <p key={item.label}><span>{item.label}</span><strong>{fmt.format(item.value)}</strong></p>)}</div></article> })}</section>
 }
 
 export default function App() {
-  const [token, setToken] = useState<string | null>(null)
-  const [user, setUser] = useState<{ email: string; name: string } | null>(null)
+  const [session, setSession] = useState<Session | null>(readSession)
+  const token = session?.token ?? null
+  const user = session?.user ?? null
   const [rows, setRows] = useState<SalesRow[]>(demoSalesRows)
   const [live, setLive] = useState(false)
+  const [inventory, setInventory] = useState<InventorySlice[]>(demoInventory)
+  const [floorStatement, setFloorStatement] = useState<string[][]>([])
+  const [floorSummary, setFloorSummary] = useState<string[][]>([])
+  const [configurationStatement, setConfigurationStatement] = useState<string[][]>([])
+  const [eoiBooked, setEoiBooked] = useState<EoiBookedRow[]>(['Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].map((month) => ({ month, units: 0, area: 0 })))
+  const [visits, setVisits] = useState<VisitsData | null>(null)
+  const [verticalSplit, setVerticalSplit] = useState<VerticalSplitRow[]>([])
+  const [page, setPage] = useState<'sales' | 'visits' | 'vertical'>('sales')
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem('amber-theme') === 'dark')
+  const inventoryColors = darkMode ? darkInventoryColors : lightInventoryColors
   useEffect(() => {
     document.documentElement.dataset.theme = darkMode ? 'dark' : 'light'
     localStorage.setItem('amber-theme', darkMode ? 'dark' : 'light')
@@ -32,43 +77,44 @@ export default function App() {
   const [status, setStatus] = useState('Connecting to your secure data source…')
   const refresh = async (force = false) => {
     if (!token) return
-    try {
-      // A manual refresh uses a unique URL so it cannot receive a cached
-      // Vercel response. The scheduled refresh keeps the normal cache key.
-      const endpoint = force ? `/api/sales?refresh=${Date.now()}` : '/api/sales'
-      const response = await fetch(endpoint, { cache: 'no-store', headers: { Authorization: `Bearer ${token}` } })
-      if (!response.ok) throw new Error()
-      const result = await response.json() as { rows: SalesRow[] }
-      if (!result.rows.length) throw new Error()
-      setRows(result.rows); setLive(true)
-      setStatus(`Private Google Sheet · refreshed ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`)
-    } catch { setLive(false); setStatus('Secure data source is not configured yet — demo data shown.') }
+    const request = (path: string) => fetch(force ? `${path}?refresh=${Date.now()}` : path, { cache: 'no-store', headers: { Authorization: `Bearer ${token}` } })
+    const results = await Promise.allSettled([request('/api/sales'), request('/api/inventory'), request('/api/floors'), request('/api/configuration'), request('/api/eoi-booked'), request('/api/visits'), request('/api/vertical-split')])
+    let loaded = false
+    const responseAt = (index: number) => results[index].status === 'fulfilled' && results[index].value.ok ? results[index].value : null
+    const salesResponse = responseAt(0); if (salesResponse) { const result = await salesResponse.json() as { rows?: SalesRow[] }; if (result.rows?.length) { setRows(result.rows); loaded = true } }
+    const inventoryResponse = responseAt(1); if (inventoryResponse) { const result = await inventoryResponse.json() as { slices?: InventorySlice[] }; if (result.slices?.length) { setInventory(result.slices); loaded = true } }
+    const floorsResponse = responseAt(2); if (floorsResponse) { const result = await floorsResponse.json() as { statement?: string[][]; summary?: string[][] }; if (result.statement?.length) setFloorStatement(result.statement); if (result.summary?.length) setFloorSummary(result.summary); loaded ||= Boolean(result.statement?.length || result.summary?.length) }
+    const configurationResponse = responseAt(3); if (configurationResponse) { const result = await configurationResponse.json() as { rows?: string[][] }; if (result.rows?.length) { setConfigurationStatement(result.rows); loaded = true } }
+    const eoiResponse = responseAt(4); if (eoiResponse) { const result = await eoiResponse.json() as { rows?: EoiBookedRow[] }; if (result.rows?.length) { setEoiBooked(result.rows); loaded = true } }
+    const visitsResponse = responseAt(5); if (visitsResponse) { const result = await visitsResponse.json() as VisitsData; if (result.siteVisits?.length) { setVisits(result); loaded = true } }
+    const verticalResponse = responseAt(6); if (verticalResponse) { const result = await verticalResponse.json() as { rows?: VerticalSplitRow[] }; if (result.rows?.length) { setVerticalSplit(result.rows); loaded = true } }
+    if (!loaded && results.some((result) => result.status === 'fulfilled' && result.value.status === 401)) { localStorage.removeItem(SESSION_KEY); setSession(null); return }
+    setLive(loaded)
+    setStatus(loaded ? `Private Google Sheet · refreshed ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : 'Secure data source is not configured yet — demo data shown.')
   }
   useEffect(() => { refresh(); const timer = setInterval(refresh, 60000); return () => clearInterval(timer) }, [token])
   const signOut = () => {
     window.google?.accounts.id.disableAutoSelect()
-    setToken(null); setUser(null); setLive(false)
+    setSession(null); localStorage.removeItem(SESSION_KEY); setLive(false)
   }
-  if (!token || !user) return <AuthGate onAuthenticated={(newToken, newUser) => { setToken(newToken); setUser(newUser) }} />
+  if (!token || !user) return <AuthGate onAuthenticated={(newToken, newUser) => { const next = { token: newToken, user: newUser, createdAt: Date.now() }; localStorage.setItem(SESSION_KEY, JSON.stringify(next)); setSession(next) }} />
   const current = rows.at(-1) ?? demoSalesRows.at(-1)!
-  const previous = rows.at(-2) ?? current
   const reportPeriod = /\d{4}/.test(current.month) ? current.month : `${current.month} 2026`
-  const data = rows.map((row) => ({ ...row, areaK: +(row.area / 1000).toFixed(1) }))
-  const metricCards = metricDefs.map((metric) => {
-    const value = current[metric.key], old = previous[metric.key]
-    const delta = old ? ((value - old) / old) * 100 : 0
-    return <article className="metric" key={metric.key}><p>{metric.label}</p><strong>{fmt.format(value)} {metric.unit && <small>{metric.unit}</small>}</strong><div><span className={delta < 0 ? 'negative' : ''}>{delta < 0 ? '▼' : '▲'} {Math.abs(delta).toFixed(2)}%</span><em>vs {fmt.format(old)} ({previous.month})</em></div></article>
-  })
   return <main className="dashboard">
-    <header className="hero"><img className="brand-logo" src={superbLogo} alt="Superb Realty" /><h1><em>Amber</em> {reportPeriod} Sales Report</h1><p>Performance summary · {reportPeriod}</p></header>
+    <header className="hero"><img className="brand-logo" src={superbLogo} alt="Superb Realty" /><h1><em>Amber_Live</em> Sales Report</h1><p>Performance summary · {reportPeriod}</p></header>
     <div className="toolbar"><span><i className={live ? 'lamp live' : 'lamp'} />{status}</span><div><span className="private">{user.email}</span><button onClick={() => setDarkMode((value) => !value)} aria-label={`Switch to ${darkMode ? 'light' : 'dark'} theme`} title={`Switch to ${darkMode ? 'light' : 'dark'} theme`}>{darkMode ? <Sun size={15} /> : <Moon size={15} />}{darkMode ? 'Light' : 'Dark'}</button><button onClick={() => refresh(true)}><RefreshCw size={15} />Refresh</button><button onClick={signOut}><LogOut size={15} />Sign out</button></div></div>
-    <section className="metrics">{metricCards}</section>
-    <h2 className="section-title">Monthly Trends</h2>
-    <section className="charts">
-      <article><h3>CP Meetings</h3><ResponsiveContainer width="100%" height={235}><LineChart data={data} margin={chartMargin}><CartesianGrid vertical={false} /><XAxis dataKey="month" padding={linePadding} tickFormatter={monthOnly} /><YAxis /><Tooltip /><Line dataKey="meetings" stroke="#43297c" strokeWidth={3} dot={{ r: 4 }} label={lineLabel} /></LineChart></ResponsiveContainer></article>
-      <article><h3>Total Visits</h3><ResponsiveContainer width="100%" height={235}><LineChart data={data} margin={chartMargin}><CartesianGrid vertical={false} /><XAxis dataKey="month" padding={linePadding} tickFormatter={monthOnly} /><YAxis /><Tooltip /><Line dataKey="visits" stroke="#43297c" strokeWidth={3} dot={{ r: 4 }} label={lineLabel} /></LineChart></ResponsiveContainer></article>
-      <article><h3>EOI</h3><ResponsiveContainer width="100%" height={235}><BarChart data={data} margin={chartMargin}><CartesianGrid vertical={false} /><XAxis dataKey="month" tickFormatter={monthOnly} /><YAxis yAxisId="units" /><YAxis yAxisId="area" orientation="right" tickFormatter={(value) => `${value}k`} /><Tooltip /><Bar yAxisId="units" dataKey="units" fill="#43297c" radius={[4, 4, 0, 0]} /><Bar yAxisId="area" dataKey="areaK" fill="#c8b27f" radius={[4, 4, 0, 0]} /></BarChart></ResponsiveContainer><p className="legend"><span>● EOI Units</span><span>● EOI Area (sq ft)</span></p></article>
-    </section>
+    <nav className="dashboard-tabs main-tabs" aria-label="Dashboard pages"><button className={page === 'sales' ? 'active' : ''} onClick={() => setPage('sales')}>Amber_Live Sales Report</button><button className={page === 'visits' ? 'active' : ''} onClick={() => setPage('visits')}>Visits</button><button className={page === 'vertical' ? 'active' : ''} onClick={() => setPage('vertical')}>Vertical Split</button></nav>
+    {page === 'sales' && <>
+    <section className="charts eoi-booked-section"><article><h3>EOI + Booked · Apr–Dec '26</h3><ResponsiveContainer width="100%" height={285}><BarChart data={eoiBooked} margin={{ top: 18, right: 30, left: 12, bottom: 0 }}><CartesianGrid vertical={false} /><XAxis dataKey="month" /><YAxis yAxisId="units" label={{ value: '# Units', angle: -90, position: 'insideLeft' }} /><YAxis yAxisId="area" orientation="right" tickFormatter={(value) => fmt.format(value)} label={{ value: 'Area (sq ft)', angle: 90, position: 'insideRight' }} /><Tooltip formatter={(value: unknown, name: unknown) => [fmt.format(Number(value) || 0), name === 'units' ? 'Units' : 'Area (sq ft)']} /><Bar yAxisId="units" dataKey="units" fill="#8ecae6" radius={[5, 5, 0, 0]} /><Bar yAxisId="area" dataKey="area" fill="#f4d35e" radius={[5, 5, 0, 0]} /></BarChart></ResponsiveContainer><p className="legend eoi-booked-legend"><span>● Units</span><span>● Area (sq ft)</span></p></article></section>
+    <h2 className="section-title inventory-title">Inventory Summary</h2>
+    <section className="charts inventory-section"><article className="inventory-card"><h3>Area-wise Inventory</h3><div className="inventory-content"><div><ResponsiveContainer width="100%" height={270}><PieChart><Pie data={inventory} dataKey="area" nameKey="status" cx="50%" cy="50%" outerRadius={92} paddingAngle={2} label={({ percent }) => `${((percent ?? 0) * 100).toFixed(0)}%`} labelLine={false}>{inventory.map((slice, index) => <Cell key={slice.status} fill={inventoryColors[index]} />)}</Pie><Tooltip formatter={(value: unknown, _name: unknown, item: any) => [`${fmt.format(Number(value) || 0)} sq ft · ${fmt.format(item?.payload?.units ?? 0)} units`, 'Area']} /></PieChart></ResponsiveContainer><p className="legend inventory-legend">{inventory.map((slice, index) => <span key={slice.status} style={{ color: inventoryColors[index] }}>● {slice.status}</span>)}</p></div><aside className="inventory-totals"><p>Total Units<strong>{fmt.format(inventory.reduce((sum, slice) => sum + slice.units, 0))}</strong></p><p>Total Area<strong>{fmt.format(inventory.reduce((sum, slice) => sum + slice.area, 0))}<small>sq ft</small></strong></p></aside></div></article></section>
+    <FloorTable title="Floor Statement" rows={floorStatement} />
+    <FloorTable title="Floor Summary" rows={floorSummary} />
+    <FloorTable title="Configuration Statement" rows={configurationStatement} />
+    </>}
+    {page === 'visits' && visits && <div className="visits-page"><h2 className="section-title">Visits Analysis</h2><VisitsKpis data={visits}/><section className="charts visits-grid"><VisitsAreaChart title="Site Visits" data={visits.siteVisits}/><VisitsAreaChart title="Month-on-Month Visits" data={visits.momVisits}/><VisitsAreaChart title="Week-on-Week Visits" data={visits.wowVisits}/></section><h2 className="section-title visits-subtitle">CP Meeting Trends</h2><section className="charts meetings-grid"><MeetingsLineChart title="CP Meetings" data={visits.cpMeetings}/><MeetingsLineChart title="Month-on-Month CP Meetings" data={visits.momCpMeetings} showToDate/></section><FloorTable title="Top 10 CPs" rows={visits.topCps}/></div>}
+    {page === 'visits' && !visits && <section className="empty-state">Visits data is loading. If this remains empty, sign out and sign in again.</section>}
+    {page === 'vertical' && <div className="vertical-page"><h2 className="section-title">Vertical Split</h2>{verticalSplit.length ? <section className="charts vertical-chart"><article><h3>Sales Contribution</h3><ResponsiveContainer width="100%" height={310}><BarChart data={verticalSplit} margin={{ top: 24, right: 24, left: 10, bottom: 14 }}><CartesianGrid vertical={false}/><XAxis dataKey="metric"/><YAxis domain={[0,100]} ticks={[0,25,50,75,100]} tickFormatter={(value) => `${value}%`} label={{ value: 'Contribution', angle: -90, position: 'insideLeft' }}/><Tooltip formatter={(value: unknown, name: unknown, item: any) => [`${fmt.format(name === 'CP %' ? item.payload.cp : item.payload.direct)} (${Number(value).toFixed(2)}%)`, String(name)]} /><Bar dataKey="cpPercent" name="CP %" stackId="contribution" fill="#27699b" radius={[0,0,5,5]}><LabelList dataKey="cpLabel" position="center" className="split-label"/></Bar><Bar dataKey="directPercent" name="Direct %" stackId="contribution" fill="#d8654f" radius={[5,5,0,0]}><LabelList dataKey="directLabel" position="center" className="split-label"/></Bar></BarChart></ResponsiveContainer><p className="legend split-legend"><span>● CP %</span><span>● Direct %</span></p></article></section> : <section className="empty-state">Vertical Split data is loading.</section>}</div>}
     <footer className="brand">Superb Realty · Sales &amp; Marketing Analytics</footer>
   </main>
 }
