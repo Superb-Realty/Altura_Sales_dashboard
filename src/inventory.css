@@ -79,6 +79,12 @@
 .floor-table tbody tr:last-child td { border-bottom: 0; }
 .floor-label { display: inline-flex; min-width: 30px; justify-content: center; padding: 3px 8px; border-radius: 99px; background: #eee8f8; color: var(--p); }
 .performance-good { display: inline-flex; min-width: 58px; justify-content: center; padding: 3px 8px; border: 1px solid #a7ddc4; border-radius: 99px; background: #e1f6eb; color: #13734a; font-weight: 800; }
+.performance-band { display:inline-flex; min-width:58px; justify-content:center; padding:3px 8px; border-radius:5px; font-weight:800; }
+.band-dark-red { background:#9c0006; color:#fff; }
+.band-light-red { background:#ffc7ce; color:#9c0006; }
+.band-yellow { background:#ffeb9c; color:#6d5700; }
+.band-light-green { background:#c6efce; color:#276221; }
+.band-dark-green { background:#006100; color:#fff; }
 .floor-table .total-row td { border-bottom: 0; background: linear-gradient(90deg,#eee6d3,#f6f1e5); color: var(--d); font-weight: 800; }
 .floor-table .total-row .floor-label { background: var(--p); color: #fff; }
 :root[data-theme='dark'] .floor-table-wrap { background: #241d31; border-color: #3c3349; box-shadow: 0 14px 36px rgba(0,0,0,.22); }
@@ -91,6 +97,61 @@
 .recharts-pie-label-text { font-size: 14px; font-weight: 600; }
 :root[data-theme='dark'] .inventory-totals strong { color: #f2e8ff; }
 :root[data-theme='dark'] .inventory-totals small { color: #b7afc1; }
+
+/* Sales tab: compact single-page placement matching the supplied reference. */
+.sales-report-grid { display:grid; grid-template-columns:minmax(360px,42%) minmax(0,58%); grid-template-areas:"inventory floors" "eoi summary" "eoi config"; gap:14px 18px; align-items:start; animation:page-in .24s ease; }
+.sales-inventory-panel { grid-area:inventory; }
+.sales-floor-statement { grid-area:floors; }
+.sales-report-grid > .eoi-booked-section { grid-area:eoi; }
+.sales-floor-summary { grid-area:summary; }
+.sales-configuration { grid-area:config; }
+.sales-report-grid .section-title { margin-bottom:9px; font-size:15px; }
+.sales-report-grid .section-title:after { width:32px; margin-top:5px; }
+.sales-report-grid .inventory-title { margin-top:0; }
+.sales-report-grid .inventory-card { max-width:none; }
+.sales-report-grid .inventory-section,.sales-report-grid .eoi-booked-section { margin-top:0; }
+.sales-report-grid .inventory-section article,.sales-report-grid .eoi-booked-section article { padding:12px 10px 8px; border-radius:12px; }
+.sales-report-grid .inventory-content { grid-template-columns:minmax(0,1fr) 140px; gap:0; }
+.sales-report-grid .inventory-totals { padding-left:8px; }
+.sales-report-grid .inventory-totals p { margin-bottom:14px; font-size:9px; }
+.sales-report-grid .inventory-totals strong { font-size:18px; white-space:nowrap; }
+.sales-report-grid .inventory-totals small { margin-left:2px; }
+.sales-report-grid .inventory-legend { gap:7px; margin:-4px 0 3px; font-size:8.5px; }
+.sales-report-grid .floor-table-section { margin-top:0; }
+.sales-report-grid .table-insight { margin:-7px 2px 4px; font-size:8px; }
+.sales-report-grid .floor-table-wrap { overflow:hidden; border-radius:10px; box-shadow:0 5px 16px rgba(47,28,88,.06); }
+.sales-report-grid .floor-table { min-width:0; table-layout:fixed; font-size:8px; }
+.sales-report-grid .floor-table th { padding:4px 2px; font-size:7px; white-space:normal; line-height:1.15; }
+.sales-report-grid .floor-table th:first-child,.sales-report-grid .floor-table td:first-child { padding-left:5px; }
+.sales-report-grid .floor-table td { padding:3px 2px; font-size:8px; overflow:hidden; text-overflow:ellipsis; }
+.sales-report-grid .floor-label { min-width:22px; padding:2px 4px; }
+.sales-report-grid .performance-good { min-width:38px; padding:2px 3px; }
+.sales-report-grid .performance-band { min-width:38px; padding:2px 3px; }
+.sales-report-grid .eoi-booked-section h3 { margin-bottom:0; }
+.sales-report-grid .eoi-booked-legend { margin:0; font-size:9px; }
+.sales-report-grid .recharts-text { font-size:8px; }
+@media (min-width:901px) {
+  .dashboard:has(.sales-report-grid) { max-width:1440px; padding:18px 24px 24px; }
+  .dashboard:has(.sales-report-grid) .hero { min-height:72px; padding:12px 24px; border-radius:14px; }
+  .dashboard:has(.sales-report-grid) .hero h1 { font-size:25px; }
+  .dashboard:has(.sales-report-grid) .hero p { margin-top:5px; }
+  .dashboard:has(.sales-report-grid) .brand-logo { width:96px; height:28px; margin-bottom:4px; }
+  .dashboard:has(.sales-report-grid) .toolbar { margin:8px 0; }
+  .dashboard:has(.sales-report-grid) .main-tabs { margin-bottom:12px; padding:5px; }
+  .dashboard:has(.sales-report-grid) .main-tabs button { min-height:32px; }
+  .dashboard:has(.sales-report-grid) .brand { margin-top:10px; }
+}
+@media (max-width:900px) {
+  .sales-report-grid { display:flex; flex-direction:column; }
+  .sales-report-grid > * { width:100%; }
+  .sales-inventory-panel { order:1; }
+  .sales-floor-statement { order:2; }
+  .sales-report-grid > .eoi-booked-section { order:3; }
+  .sales-floor-summary { order:4; }
+  .sales-configuration { order:5; }
+  .sales-report-grid .floor-table-wrap { overflow-x:auto; }
+  .sales-report-grid .floor-table { min-width:820px; }
+}
 @media (max-width: 620px) { .dashboard-tabs { gap: 5px; margin-bottom: 26px; padding: 6px; } .dashboard-tabs button { min-height: 46px; padding: 5px 3px; font-size: 8px; letter-spacing: .025em; } .inventory-content { grid-template-columns: 1fr; } .inventory-totals { border-left: 0; border-top: 1px solid var(--l); padding: 16px 0 0; display: flex; justify-content: space-around; gap: 16px; } }
 @media (max-width: 900px) { .visits-grid,.meetings-grid { grid-template-columns: 1fr; } }
 @media (max-width: 760px) { .visits-kpis { grid-template-columns: 1fr; } }
