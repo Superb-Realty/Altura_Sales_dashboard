@@ -20,11 +20,14 @@
 .cp-trends-row { display:grid; grid-template-columns:1fr; gap:25px; align-items:stretch; }
 .cp-meeting-charts { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:22px; align-items:stretch; }
 .cp-trends-row .cp-meeting-kpi { margin-bottom:0; }
-.cp-trends-row .cp-meeting-kpi > article { width:min(100%,480px); height:auto; min-height:240px; margin:0 auto; box-sizing:border-box; }
+.cp-trends-row .cp-meeting-kpi > article { width:min(100%,480px); height:auto; min-height:190px; margin:0 auto; box-sizing:border-box; }
 .cp-trends-row .cp-meeting-kpi .kpi-primary { display:flex; flex-direction:column; justify-content:center; padding:26px 24px; }
 .cp-trends-row .cp-meeting-kpi .kpi-primary p { margin-bottom:16px; font-size:14px; }
 .cp-trends-row .cp-meeting-kpi .kpi-primary > strong { font-size:42px; }
 .cp-trends-row .cp-meeting-kpi .kpi-primary > span { align-self:flex-start; }
+.cp-trends-row .cp-meeting-kpi .kpi-comparison { display:flex; align-items:center; gap:7px; flex-wrap:nowrap; }
+.cp-trends-row .cp-meeting-kpi .kpi-comparison > span { flex:0 0 auto; padding:4px 8px; border-radius:99px; font-size:11px; font-weight:800; }
+.cp-trends-row .cp-meeting-kpi .kpi-comparison small { margin-left:0; white-space:nowrap; }
 .cp-trends-row .cp-meeting-kpi .kpi-breakdown { justify-content:center; padding:24px; }
 .cp-trends-row .cp-meeting-kpi .kpi-breakdown p { padding:12px 0; }
 .cp-trends-row .meetings-grid { height:100%; }

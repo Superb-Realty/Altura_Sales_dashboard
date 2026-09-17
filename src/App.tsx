@@ -77,7 +77,7 @@ function CpMeetingKpi({ data }: { data: VisitsData }) {
   const value = latest?.meetings ?? 0, previousValue = previous?.meetings ?? 0
   const delta = previousValue ? ((value - previousValue) / previousValue) * 100 : 0
   const periodLabel = (period: string) => period.trim().toLowerCase() === 'previous period' ? 'Previous 28 days Period' : period
-  return <section className="visits-kpis cp-meeting-kpi"><article><div className="kpi-primary"><p>CP Meetings</p><strong>{fmt.format(value)}</strong><span className={delta < 0 ? 'down' : 'up'}>{delta < 0 ? '▼' : '▲'} {Math.abs(delta).toFixed(2)}%</span><small>vs {fmt.format(previousValue)} ({previous ? periodLabel(previous.period) : 'Previous 28 days Period'})</small></div><div className="kpi-breakdown">{totals.map((item) => <p key={item.period}><span>{periodLabel(item.period)}</span><strong>{fmt.format(item.meetings)}</strong></p>)}</div></article></section>
+  return <section className="visits-kpis cp-meeting-kpi"><article><div className="kpi-primary"><p>CP Meetings</p><strong>{fmt.format(value)}</strong><div className="kpi-comparison"><span className={delta < 0 ? 'down' : 'up'}>{delta < 0 ? '▼' : '▲'} {Math.abs(delta).toFixed(2)}%</span><small>vs {fmt.format(previousValue)} ({previous ? periodLabel(previous.period) : 'Previous 28 days Period'})</small></div></div><div className="kpi-breakdown">{totals.map((item) => <p key={item.period}><span>{periodLabel(item.period)}</span><strong>{fmt.format(item.meetings)}</strong></p>)}</div></article></section>
 }
 
 export default function App() {
