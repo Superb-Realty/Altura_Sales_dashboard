@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from 'react'
-import superbLogo from './assets/Superb_logo/superb.jpeg'
 import './AuthGate.css'
 
 type User = { email: string; name: string }
@@ -32,5 +31,5 @@ export default function AuthGate({ onAuthenticated }: Props) {
     script.onerror = () => setMessage('Google sign-in could not be loaded. Please check your connection and try again.')
     document.head.append(script)
   }, [onAuthenticated])
-  return <main className="auth-page"><section className="auth-card" aria-labelledby="sign-in-title"><div className="auth-brand"><img className="auth-logo" src={superbLogo} alt="Superb Realty" /><div className="auth-brand-copy"><h1 className="auth-title" id="sign-in-title">AMBER <span>SALES</span> Dashboard</h1><p>Secure access to the Amber sales performance dashboard.</p></div><p className="auth-details">SALES &amp; MARKETING ANALYTICS</p></div><div className="auth-signin"><h2>Welcome back</h2><p>{message}</p><i className="auth-rule" />{clientId && <div className="google-sign-in" ref={buttonRef} />}<p className="auth-note"><span>Private access only.</span> Your Google account must be approved by the administrator.</p></div></section></main>
+  return <main className="auth-page"><section className="auth-card" aria-labelledby="sign-in-title"><div className="auth-brand"><div className="auth-brand-copy"><h1 className="auth-title" id="sign-in-title">AMBER <span>SALES</span> Dashboard</h1><p>Secure access to the Amber sales performance dashboard.</p></div><p className="auth-details">SALES &amp; MARKETING ANALYTICS</p></div><div className="auth-signin"><h2>Welcome back</h2><p>{message}</p><i className="auth-rule" />{clientId && <div className="google-sign-in" ref={buttonRef} />}<p className="auth-note"><span>Private access only.</span> Your Google account must be approved by the administrator.</p></div></section></main>
 }
