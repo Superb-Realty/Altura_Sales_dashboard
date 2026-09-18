@@ -109,6 +109,8 @@
 .vertical-page { margin-top:64px; padding-top:48px; border-top:0!important; animation:page-in .24s ease; }
 .report-section { margin-top:64px; }
 .vertical-chart { grid-template-columns: minmax(0,1fr); width: min(100%,900px); margin: 0 auto; }
+.vertical-page .vertical-split-table-wrap { width:min(100%,900px); margin:0 auto 32px; }
+.vertical-split-table th:first-child,.vertical-split-table td:first-child { width:28%; }
 .vertical-chart article { padding: 22px 26px 14px; }
 .vertical-chart .split-label { font-size:10.5px; font-weight:900; paint-order:stroke; stroke-linejoin:round; }
 .vertical-chart .cp-split-label { fill:#34205f; stroke:rgba(255,255,255,.55); stroke-width:1px; }

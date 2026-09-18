@@ -53,7 +53,7 @@ Rows without a Month/Period value are ignored. Numeric values may use comma sepa
 ## UI behavior
 
 - The Superb logo, report title, and subtitle are centered in the hero banner.
-- Light/dark mode is controlled in the toolbar and saved in browser local storage under `amber-theme`.
+- Dark mode is the default. Light/dark mode is controlled in the toolbar and saved in browser local storage under `amber-theme`.
 - If the API cannot return data, the dashboard shows demo rows and displays an offline status.
 
 ## Local development
