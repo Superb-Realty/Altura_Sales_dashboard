@@ -55,6 +55,7 @@
 .visits-kpis > article { display: grid; grid-template-columns: minmax(0,1fr) minmax(150px,.9fr); overflow: hidden; border: 1px solid #ece6dc; border-top: 3px solid var(--g); border-radius: 16px; background: #fff; box-shadow: 0 8px 24px rgba(47,28,88,.06); }
 .kpi-primary { padding: 20px; }
 .kpi-primary p { margin: 0 0 12px; color: var(--p); font-size: 13px; font-weight: 800; }
+.kpi-primary .kpi-title-period { margin-left:4px; color:var(--m); font-size:11px; font-weight:600; white-space:nowrap; }
 .kpi-primary > strong { display: block; margin-bottom: 12px; color: var(--d); font: 500 36px/1 Fraunces,serif; }
 .kpi-primary > span { display: inline-block; padding: 4px 8px; border-radius: 99px; font-size: 11px; font-weight: 800; }
 .kpi-primary .up { background: #e1f6eb; color: #13734a; }
@@ -70,11 +71,13 @@
 .visits-kpis:not(.cp-meeting-kpi) .kpi-breakdown p { width:100%; flex-direction:column; align-items:center; gap:7px; padding:0; border:0; text-align:center; }
 .visits-kpis:not(.cp-meeting-kpi) .kpi-breakdown span { color:#7c6d50; font-size:11px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; }
 .visits-kpis:not(.cp-meeting-kpi) .kpi-breakdown strong { color:var(--p); font:500 30px/1 Fraunces,serif; }
+.visits-kpis:not(.cp-meeting-kpi) .kpi-breakdown .kpi-ltd { margin:0; color:#9a7834; font-size:11px; font-weight:700; line-height:1; }
 .cp-trends-row .cp-meeting-kpi > article { grid-template-columns:minmax(0,1.7fr) minmax(145px,.65fr); }
 .cp-trends-row .cp-meeting-kpi .kpi-breakdown { align-items:center; padding:20px; background:linear-gradient(145deg,#fbf8f1,#f4eee2); }
 .cp-trends-row .cp-meeting-kpi .kpi-breakdown p { width:100%; flex-direction:column; align-items:center; gap:7px; padding:0; border:0; text-align:center; }
 .cp-trends-row .cp-meeting-kpi .kpi-breakdown span { color:#7c6d50; font-size:11px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; }
 .cp-trends-row .cp-meeting-kpi .kpi-breakdown strong { color:var(--p); font:500 30px/1 Fraunces,serif; }
+.cp-trends-row .cp-meeting-kpi .kpi-breakdown .kpi-ltd { margin:0; color:#9a7834; font-size:11px; font-weight:700; line-height:1; }
 :root[data-theme='dark'] .visits-kpis > article { border-color: #3c3349; background: #241d31; }
 :root[data-theme='dark'] .kpi-primary > strong,:root[data-theme='dark'] .kpi-breakdown strong { color: #f2e8ff; }
 :root[data-theme='dark'] .kpi-breakdown { background: #292136; }
@@ -157,14 +160,14 @@
 :root[data-theme='dark'] .inventory-totals small { color: #b7afc1; }
 
 /* Sales tab: compact single-page placement matching the supplied reference. */
-.sales-report-grid { --report-row-gap:25px; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); grid-template-areas:"inventory-title inventory-title" "inventory-table inventory-table" "inventory-chart eoi" "config config" "floors floors" "summary summary"; column-gap:40px; row-gap:var(--report-row-gap); align-items:start; animation:page-in .24s ease; }
+.sales-report-grid { --report-row-gap:25px; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); grid-template-areas:"inventory-title inventory-title" "inventory-table inventory-table" "inventory-chart eoi" "config config" "floor-summary floor-summary" "floor-statement floor-statement"; column-gap:40px; row-gap:var(--report-row-gap); align-items:start; animation:page-in .24s ease; }
 .sales-inventory-panel { display:contents; }
 .sales-inventory-panel > .inventory-title { grid-area:inventory-title; }
 .sales-inventory-panel > .inventory-summary-wrap { grid-area:inventory-table; }
 .sales-inventory-panel > .inventory-section { grid-area:inventory-chart; }
-.sales-floor-statement { grid-area:floors; }
+.sales-floor-statement { grid-area:floor-statement; }
 .sales-report-grid > .eoi-booked-section { grid-area:eoi; }
-.sales-floor-summary { grid-area:summary; }
+.sales-floor-summary { grid-area:floor-summary; }
 .sales-configuration { grid-area:config; }
 .sales-configuration,.sales-floor-statement,.sales-floor-summary { margin-top:0; }
 .sales-report-grid .section-title { margin-bottom:25px; font-size:18px; }
@@ -296,8 +299,8 @@
   .sales-inventory-panel > .inventory-section { order:3; width:100%; }
   .sales-report-grid > .eoi-booked-section { order:4; }
   .sales-configuration { order:5; }
-  .sales-floor-statement { order:6; }
-  .sales-floor-summary { order:7; }
+  .sales-floor-summary { order:6; }
+  .sales-floor-statement { order:7; }
   .sales-report-grid .floor-table-wrap { overflow-x:auto; }
   .sales-report-grid .floor-table { min-width:820px; }
 }

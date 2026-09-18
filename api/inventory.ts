@@ -20,7 +20,7 @@ async function handleInventoryRequest(request: Request) {
   try {
     const auth = new google.auth.JWT({ email, key: privateKey, scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'] })
     const sheets = google.sheets({ version: 'v4', auth })
-    const response = await sheets.spreadsheets.values.get({ spreadsheetId: sheetId, range: 'Inventory_Summary!A1:F4' })
+    const response = await sheets.spreadsheets.values.get({ spreadsheetId: sheetId, range: 'Inventory_Summary!A1:G4' })
     const values = response.data.values ?? []
     const headers = values[0] ?? []
     const units = values.find((row) => String(row[0]).trim().toLowerCase() === 'units') ?? []
