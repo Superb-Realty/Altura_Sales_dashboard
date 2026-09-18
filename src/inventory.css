@@ -108,9 +108,11 @@
 .empty-state { padding: 42px; border: 1px dashed var(--l); border-radius: 16px; color: var(--m); text-align: center; }
 .vertical-page { margin-top:64px; padding-top:48px; border-top:0!important; animation:page-in .24s ease; }
 .report-section { margin-top:64px; }
-.vertical-chart { grid-template-columns: minmax(0,1fr); width: min(100%,900px); margin: 0 auto; }
-.vertical-page .vertical-split-table-wrap { width:min(100%,900px); margin:0 auto 32px; }
-.vertical-split-table th:first-child,.vertical-split-table td:first-child { width:28%; }
+.vertical-split-content { display:grid; grid-template-columns:minmax(320px,.72fr) minmax(0,1.55fr); align-items:stretch; gap:24px; }
+.vertical-chart { grid-template-columns:minmax(0,1fr); width:100%; margin:0; }
+.vertical-page .vertical-split-table-wrap { width:100%; height:100%; margin:0; }
+.vertical-split-table { height:100%; }
+.vertical-split-table th:first-child,.vertical-split-table td:first-child { width:46%; }
 .vertical-chart article { padding: 22px 26px 14px; }
 .vertical-chart .split-label { font-size:10.5px; font-weight:900; paint-order:stroke; stroke-linejoin:round; }
 .vertical-chart .cp-split-label { fill:#34205f; stroke:rgba(255,255,255,.55); stroke-width:1px; }
@@ -263,10 +265,10 @@
 :root[data-theme='dark'] .recharts-line-curve,
 :root[data-theme='dark'] .recharts-line-dot { filter:brightness(1.42) saturate(.82); }
 :root[data-theme='dark'] .visits-legend span:first-child,
-:root[data-theme='dark'] .eoi-booked-legend span:first-child,
-:root[data-theme='dark'] .split-legend span:first-child { color:#e5cd96; }
+:root[data-theme='dark'] .eoi-booked-legend span:first-child { color:#bca8e6; }
 :root[data-theme='dark'] .visits-legend span:last-child,
-:root[data-theme='dark'] .eoi-booked-legend span:last-child,
+:root[data-theme='dark'] .eoi-booked-legend span:last-child { color:#e5cd96; }
+:root[data-theme='dark'] .split-legend span:first-child { color:#e5cd96; }
 :root[data-theme='dark'] .split-legend span:last-child { color:#bca8e6; }
 :root[data-theme='dark'] .vertical-chart .cp-split-label { fill:#281747; stroke:rgba(255,255,255,.45); }
 :root[data-theme='dark'] .vertical-chart .direct-split-label { fill:#fff; stroke:#241532; }
@@ -294,6 +296,8 @@
   .dashboard:has(.sales-report-grid) .brand { margin-top:10px; }
 }
 @media (max-width:900px) {
+  .vertical-split-content { grid-template-columns:1fr; }
+  .vertical-page .vertical-split-table-wrap,.vertical-split-table { height:auto; }
   .sales-report-grid { display:flex; flex-direction:column; }
   .sales-report-grid > * { width:100%; }
   .sales-inventory-panel > .inventory-title { order:1; width:100%; }

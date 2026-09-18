@@ -81,7 +81,7 @@ function CpMeetingKpi({ data }: { data: VisitsData }) {
 }
 
 function VerticalSplitTable({ data }: { data: VerticalSplitRow[] }) {
-  return <div className="inventory-summary-wrap vertical-split-table-wrap"><table className="inventory-summary-table vertical-split-table"><thead><tr><th>Metric</th><th>CP</th><th>Direct</th><th>CP %</th><th>Direct %</th></tr></thead><tbody>{data.map((row) => <tr key={row.metric}><td>{row.metric}</td><td>{fmt.format(row.cp)}</td><td>{fmt.format(row.direct)}</td><td>{row.cpPercent.toFixed(2)}%</td><td>{row.directPercent.toFixed(2)}%</td></tr>)}</tbody></table></div>
+  return <div className="inventory-summary-wrap vertical-split-table-wrap"><table className="inventory-summary-table vertical-split-table"><thead><tr><th>Metric</th><th>CP</th><th>Direct</th></tr></thead><tbody>{data.map((row) => <tr key={row.metric}><td>{row.metric}</td><td>{fmt.format(row.cp)}</td><td>{fmt.format(row.direct)}</td></tr>)}</tbody></table></div>
 }
 export default function App() {
   const [session, setSession] = useState<Session | null>(readSession)
@@ -105,7 +105,25 @@ export default function App() {
   const [status, setStatus] = useState('Connecting to your secure data source…')
   const refresh = async (force = false) => {
     if (!token) return
-    const request = (path: string) => fetch(force ? `${path}?refresh=${Date.now()}` : path, { cache: 'no-store', headers: { Authorization: `Bearer ${token}` } })
+    const request = async (path: string) => {
+      const url = force ? `${path}?refresh=${Date.now()}` : path
+      const retryableStatuses = new Set([429, 502, 503, 504])
+      const maxAttempts = 3
+      for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+        const controller = new AbortController()
+        const timeout = setTimeout(() => controller.abort(), 12000)
+        try {
+          const response = await fetch(url, { cache: 'no-store', headers: { Authorization: `Bearer ${token}` }, signal: controller.signal })
+          if (!retryableStatuses.has(response.status) || attempt === maxAttempts - 1) return response
+        } catch (error) {
+          if (attempt === maxAttempts - 1) throw error
+        } finally {
+          clearTimeout(timeout)
+        }
+        await new Promise((resolve) => setTimeout(resolve, 500 * 2 ** attempt))
+      }
+      throw new Error(`Request failed after ${maxAttempts} attempts: ${path}`)
+    }
     const results = await Promise.allSettled([request('/api/sales'), request('/api/inventory'), request('/api/floors'), request('/api/configuration'), request('/api/eoi-booked'), request('/api/visits'), request('/api/vertical-split')])
     let loaded = false
     const responseAt = (index: number) => results[index].status === 'fulfilled' && results[index].value.ok ? results[index].value : null
@@ -139,7 +157,7 @@ export default function App() {
     <div className="sales-configuration"><FloorTable title="Configuration Statement" rows={configurationStatement} /></div>
     </div>
     {visits ? <div className="visits-page"><h2 className="section-title">Visits Analysis</h2><VisitsKpis data={visits}/><section className="charts visits-grid"><VisitsAreaChart title="Month-on-Month Visits" data={visits.momVisits}/><VisitsAreaChart title="Week-on-Week Visits" data={visits.wowVisits}/></section><h2 className="section-title visits-subtitle">Channel Performance</h2><div className="cp-trends-row"><CpMeetingKpi data={visits}/><div className="cp-meeting-charts"><section className="charts meetings-grid"><MeetingsLineChart title="Month-on-Month CP Meetings" data={visits.momCpMeetings} showToDate/></section><section className="charts meetings-grid"><MeetingMixLineChart data={visits.momCpMeetingMix}/></section></div></div><div className="cp-data-grid"><div className="cp-data-column"><ActiveCpStats title="Active CPs (LTD)" rows={visits.activeCpsLtd}/><FloorTable title="Top 10 CPs (LTD)" rows={visits.topCps}/></div><div className="cp-data-column"><ActiveCpStats title="Active CPs (Last 28 Days)" rows={visits.activeCps28Days}/><FloorTable title="Top 10 CPs (Last 28 Days)" rows={visits.topCps28Days}/></div></div></div> : <section className="empty-state report-section">Visits data is loading. If this remains empty, sign out and sign in again.</section>}
-    <div className="vertical-page"><h2 className="section-title">Vertical Split</h2>{verticalSplit.length ? <><VerticalSplitTable data={verticalSplit}/><section className="charts vertical-chart"><article><h3>Sales Contribution</h3><ResponsiveContainer width="100%" height={310}><BarChart data={verticalSplit} barCategoryGap="30%" margin={{ top: 24, right: 24, left: 10, bottom: 14 }}><CartesianGrid vertical={false}/><XAxis dataKey="metric"/><YAxis domain={[0,100]} ticks={[0,25,50,75,100]} tickFormatter={(value) => `${value}%`} label={{ value: 'Contribution', angle: -90, position: 'insideLeft' }}/><Tooltip formatter={(value: unknown, name: unknown, item: any) => [`${fmt.format(name === 'CP %' ? item.payload.cp : item.payload.direct)} (${Number(value).toFixed(2)}%)`, String(name)]} /><Bar dataKey="cpPercent" name="CP %" stackId="contribution" barSize={92} fill="#C8B27F" radius={[0,0,0,0]} isAnimationActive={false}><LabelList dataKey="cpLabel" position="center" className="split-label cp-split-label"/></Bar><Bar dataKey="directPercent" name="Direct %" stackId="contribution" barSize={92} fill="#43297C" radius={[5,5,0,0]} isAnimationActive={false}><LabelList dataKey="directLabel" position="center" className="split-label direct-split-label"/></Bar></BarChart></ResponsiveContainer><p className="legend split-legend"><span>● CP %</span><span>● Direct %</span></p></article></section></> : <section className="empty-state">Vertical Split data is loading.</section>}</div>
+    <div className="vertical-page"><h2 className="section-title">Vertical Split</h2>{verticalSplit.length ? <div className="vertical-split-content"><VerticalSplitTable data={verticalSplit}/><section className="charts vertical-chart"><article><h3>Sales Contribution</h3><ResponsiveContainer width="100%" height={310}><BarChart data={verticalSplit} barCategoryGap="30%" margin={{ top: 24, right: 24, left: 10, bottom: 14 }}><CartesianGrid vertical={false}/><XAxis dataKey="metric"/><YAxis domain={[0,100]} ticks={[0,25,50,75,100]} tickFormatter={(value) => `${value}%`} label={{ value: 'Contribution', angle: -90, position: 'insideLeft' }}/><Tooltip formatter={(value: unknown, name: unknown, item: any) => [`${fmt.format(name === 'CP %' ? item.payload.cp : item.payload.direct)} (${Number(value).toFixed(2)}%)`, String(name)]} /><Bar dataKey="cpPercent" name="CP %" stackId="contribution" barSize={92} fill="#C8B27F" radius={[0,0,0,0]} isAnimationActive={false}><LabelList dataKey="cpLabel" position="center" className="split-label cp-split-label"/></Bar><Bar dataKey="directPercent" name="Direct %" stackId="contribution" barSize={92} fill="#43297C" radius={[5,5,0,0]} isAnimationActive={false}><LabelList dataKey="directLabel" position="center" className="split-label direct-split-label"/></Bar></BarChart></ResponsiveContainer><p className="legend split-legend"><span>● CP %</span><span>● Direct %</span></p></article></section></div> : <section className="empty-state">Vertical Split data is loading.</section>}</div>
     <footer className="brand">Superb Realty · GHP Group</footer>
   </main>
 }
