@@ -13,8 +13,8 @@ type MeetingTrend = { period: string; meetings: number; toDate?: number }
 type MeetingMixTrend = { period: string; fresh: number; followUps: number }
 type VisitsData = { siteVisits: VisitTrend[]; momVisits: VisitTrend[]; wowVisits: VisitTrend[]; cpMeetings: MeetingTrend[]; momCpMeetings: MeetingTrend[]; momCpMeetingMix: MeetingMixTrend[]; topCps: string[][]; activeCpsLtd: string[][]; activeCps28Days: string[][]; topCps28Days: string[][] }
 type VerticalSplitRow = { metric: string; cpPercent: number; directPercent: number; cp: number; direct: number; cpLabel: string; directLabel: string }
-const lightInventoryColors = ['#43297C', '#C8B27F', '#76649D', '#2F7D75']
-const darkInventoryColors = ['#8F7AB9', '#CAB584', '#6F579F', '#6FB7AE']
+const lightInventoryColors = ['#3C966F', '#C8B27F', '#43297C', '#9A86C7']
+const darkInventoryColors = ['#79C99C', '#D4BE83', '#5B3A8E', '#A996D3']
 const demoInventory: InventorySlice[] = [{ status: 'Booked', units: 25, area: 20250 }, { status: 'EOI', units: 21, area: 21919 }, { status: 'Blocked', units: 12, area: 8871 }, { status: 'Open', units: 93, area: 89259 }]
 type Session = { token: string; user: { email: string; name: string }; createdAt: number }
 const SESSION_KEY = 'amber-dashboard-session'
@@ -81,7 +81,11 @@ function CpMeetingKpi({ data }: { data: VisitsData }) {
 }
 
 function VerticalSplitTable({ data }: { data: VerticalSplitRow[] }) {
-  return <div className="inventory-summary-wrap vertical-split-table-wrap"><table className="inventory-summary-table vertical-split-table"><thead><tr><th>Metric</th><th>CP</th><th>Direct</th></tr></thead><tbody>{data.map((row) => <tr key={row.metric}><td>{row.metric}</td><td>{fmt.format(row.cp)}</td><td>{fmt.format(row.direct)}</td></tr>)}</tbody></table></div>
+  const headerWeight = 1.15
+  const headerHeight = `${(headerWeight / (data.length + headerWeight)) * 100}%`
+  const bodyHeight = `${(data.length / (data.length + headerWeight)) * 100}%`
+  const rowHeight = `${100 / data.length}%`
+  return <div className="inventory-summary-wrap vertical-split-table-wrap"><table className="inventory-summary-table vertical-split-table"><thead style={{ height:headerHeight }}><tr><th>Metric</th><th>CP</th><th>Direct</th></tr></thead><tbody style={{ height:bodyHeight }}>{data.map((row) => <tr key={row.metric} style={{ height:rowHeight }}><td>{row.metric}</td><td>{fmt.format(row.cp)}</td><td>{fmt.format(row.direct)}</td></tr>)}</tbody></table></div>
 }
 export default function App() {
   const [session, setSession] = useState<Session | null>(readSession)
