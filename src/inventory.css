@@ -276,6 +276,8 @@
 :root[data-theme='dark'] .floor-table td { color:#f5f0fa; }
 :root[data-theme='dark'] .inventory-summary-table th,
 :root[data-theme='dark'] .floor-table th { color:#fff; }
+.vertical-split-table th,
+:root[data-theme='dark'] .vertical-split-table th { background:linear-gradient(135deg,var(--d),var(--p)); border-color:rgba(255,255,255,.08); color:#fff; }
 :root[data-theme='dark'] .floor-table tbody tr:nth-child(even):not(.total-row) td { background:#2c2438; }
 :root[data-theme='dark'] .floor-table tbody tr:not(.total-row):hover td { background:#392d49; }
 :root[data-theme='dark'] .sales-report-grid .floor-table td:nth-child(1),
