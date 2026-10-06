@@ -85,7 +85,7 @@ function VerticalSplitTable({ data }: { data: VerticalSplitRow[] }) {
   const headerHeight = `${(headerWeight / (data.length + headerWeight)) * 100}%`
   const bodyHeight = `${(data.length / (data.length + headerWeight)) * 100}%`
   const rowHeight = `${100 / data.length}%`
-  return <div className="inventory-summary-wrap vertical-split-table-wrap"><table className="inventory-summary-table vertical-split-table"><thead style={{ height:headerHeight }}><tr><th>Metric</th><th>CP</th><th>Direct</th></tr></thead><tbody style={{ height:bodyHeight }}>{data.map((row) => <tr key={row.metric} style={{ height:rowHeight }}><td>{row.metric}</td><td>{fmt.format(row.cp)}</td><td>{fmt.format(row.direct)}</td></tr>)}</tbody></table></div>
+  return <div className="inventory-summary-wrap vertical-split-table-wrap"><table className="inventory-summary-table vertical-split-table"><thead style={{ height:headerHeight }}><tr><th>Metric</th><th>CP</th><th>Direct</th><th>Total</th></tr></thead><tbody style={{ height:bodyHeight }}>{data.map((row) => <tr key={row.metric} style={{ height:rowHeight }}><td>{row.metric}</td><td>{fmt.format(row.cp)}</td><td>{fmt.format(row.direct)}</td><td>{fmt.format(row.cp + row.direct)}</td></tr>)}</tbody></table></div>
 }
 export default function App() {
   const [session, setSession] = useState<Session | null>(readSession)
