@@ -3,6 +3,7 @@ import { config } from 'dotenv'
 import { authenticate } from './auth-utils.js'
 
 config({ path: '.env.local', quiet: true })
+config({ quiet: true })
 const number = (value: unknown) => Number(String(value ?? '').replace(/,/g, '')) || 0
 
 async function handleVisitsRequest(request: Request) {
@@ -18,7 +19,7 @@ async function handleVisitsRequest(request: Request) {
   try {
     const auth = new google.auth.JWT({ email, key, scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'] })
     const sheets = google.sheets({ version: 'v4', auth })
-    const tabs = ['Site_Visits!A1:C20', "'MoM_Visits_(last_6_Months)'!A1:C20", "'WoW_Visits_(Last_8_Weeks)'!A1:D20", 'CP_Meetings!A1:B20', "'MoM_CP_Meetings_(last_6_Months)'!A1:Z20", 'Top_10_CPs!A1:Z20', 'Active_CPs_LTD!A1:Z1000', 'Active_CPs_28_Days!A1:Z1000', 'Top_10_CPs_28_Days!A1:Z20']
+    const tabs = ['Site_Visits!A1:C20', "'MoM_Visits_(last_6_Months)'!A1:C20", "'WoW_Visits_(Last_8_Weeks)'!A1:D20", 'CP_Meetings!A1:B20', "'MoM_CP_Meetings_(last_6_Months)'!A1:Z20", 'Top_10_CPs!A1:Z20', 'Active_CPs_LTD!A1:Z1000', 'Active_CPs_28_Days!A1:Z1000', 'Top_10_CPs_28_Days!A1:Z20', "'Re-Visit Frequency'!A1:Z50"]
     const responses = await Promise.all(tabs.map((range) => sheets.spreadsheets.values.get({ spreadsheetId: sheetId, range })))
     const values = responses.map((response) => response.data.values ?? [])
     const siteVisits = values[0].slice(1).map((row) => ({ period: row[0], fresh: number(row[1]), revisits: number(row[2]) }))
@@ -31,7 +32,8 @@ async function handleVisitsRequest(request: Request) {
     const momCpRows = values[4].slice(1).reverse()
     const momCpMeetings = momCpRows.map((row) => ({ period: String(row[0]).trim().split(' ')[0].slice(0, 3), meetings: number(row[1]), toDate: number(row[2]) }))
     const momCpMeetingMix = momCpRows.map((row) => ({ period: String(row[0]).trim().split(' ')[0].slice(0, 3), fresh: freshIndex >= 0 ? number(row[freshIndex]) : 0, followUps: followUpsIndex >= 0 ? number(row[followUpsIndex]) : 0 }))
-    return Response.json({ siteVisits, momVisits, wowVisits, cpMeetings, momCpMeetings, momCpMeetingMix, topCps: values[5], activeCpsLtd: values[6], activeCps28Days: values[7], topCps28Days: values[8] }, { headers: { 'Cache-Control': 'private, no-store' } })
+    const revisitFrequency = (values[9] ?? []).filter((row) => row.some((cell) => cell !== undefined && cell !== ''))
+    return Response.json({ siteVisits, momVisits, wowVisits, cpMeetings, momCpMeetings, momCpMeetingMix, topCps: values[5], activeCpsLtd: values[6], activeCps28Days: values[7], topCps28Days: values[8], revisitFrequency }, { headers: { 'Cache-Control': 'private, no-store' } })
   } catch (error) { console.error('Visits data request failed', error); return Response.json({ error: 'Unable to load visits analysis data.' }, { status: 502 }) }
 }
 export default { fetch: handleVisitsRequest }

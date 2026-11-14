@@ -90,6 +90,14 @@
 :root[data-theme='dark'] .kpi-primary .up { background: #1d4938; color: #9aebc2; }
 :root[data-theme='dark'] .kpi-primary .down { background: #61333d; color: #ffdce1; }
 .visits-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+.revisit-frequency-panel { margin-top:34px; display:flex; justify-content:center; }
+.revisit-frequency-panel .floor-table-section { width:min(100%, 520px); margin-top:0; }
+.revisit-frequency-panel .floor-table-wrap { border-radius:14px; overflow-x:hidden; }
+.revisit-frequency-panel .floor-table { width:100%; min-width:0; table-layout:fixed; }
+.revisit-frequency-panel .floor-table th { padding:11px 16px; font-size:13px; }
+.revisit-frequency-panel .floor-table td { padding:9px 16px; font-size:13px; }
+.revisit-frequency-panel .floor-table th:first-child, .revisit-frequency-panel .floor-table td:first-child { width:52%; text-align:left; padding-left:24px; }
+.revisit-frequency-panel .floor-table th:last-child, .revisit-frequency-panel .floor-table td:last-child { width:48%; text-align:center; }
 .meetings-grid { grid-template-columns: minmax(0,1fr); }
 .visits-subtitle { margin-top:112px; }
 .visits-page > .section-title { position:relative; border-top:0; padding-top:0; }

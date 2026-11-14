@@ -3,6 +3,7 @@ import { config } from 'dotenv'
 import { authenticate } from './auth-utils.js'
 
 config({ path: '.env.local', quiet: true })
+config({ quiet: true })
 
 type SalesRow = { month: string; meetings: number; visits: number; units: number; area: number }
 type GoogleSheetsConfig = { client_email?: string; private_key?: string; sheet_id?: string; range?: string }

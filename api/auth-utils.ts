@@ -2,16 +2,23 @@ import { OAuth2Client } from 'google-auth-library'
 import { config } from 'dotenv'
 import { createHmac, timingSafeEqual } from 'node:crypto'
 
-// Vercel supplies environment variables in deployment. Loading this file also
+// Vercel supplies environment variables in deployment. Loading these files also
 // makes the same configuration available when the functions run locally.
 config({ path: '.env.local', quiet: true })
+config({ quiet: true })
 
 const unauthorized = (message = 'Authentication is required.') => Response.json({ error: message }, { status: 401, headers: { 'Cache-Control': 'no-store' } })
 const configuredEmails = () => new Set((process.env.ALLOWED_GOOGLE_EMAILS || '').split(',').map((email) => email.trim().toLowerCase()).filter(Boolean))
 export type AuthenticatedUser = { email: string; name: string }
 const sessionSecret = () => {
   if (process.env.SESSION_SECRET) return process.env.SESSION_SECRET
-  try { return JSON.parse(process.env.GOOGLE_SHEETS_CONFIG || '{}').private_key as string | undefined } catch { return process.env.GOOGLE_PRIVATE_KEY }
+  if (process.env.GOOGLE_SHEETS_CONFIG) {
+    try {
+      const parsed = JSON.parse(process.env.GOOGLE_SHEETS_CONFIG) as { private_key?: string }
+      if (parsed?.private_key) return parsed.private_key
+    } catch {}
+  }
+  return process.env.GOOGLE_PRIVATE_KEY
 }
 export function createSessionToken(user: AuthenticatedUser) {
   const secret = sessionSecret()
@@ -21,13 +28,19 @@ export function createSessionToken(user: AuthenticatedUser) {
   return `amber.${payload}.${signature}`
 }
 const verifySessionToken = (token: string): AuthenticatedUser | null => {
-  const [, payload, signature] = token.split('.')
+  const parts = token.split('.')
+  if (parts.length !== 3) return null
+  const [, payload, signature] = parts
   const secret = sessionSecret()
   if (!payload || !signature || !secret) return null
   const expected = createHmac('sha256', secret).update(payload).digest('base64url')
   const left = Buffer.from(signature); const right = Buffer.from(expected)
   if (left.length !== right.length || !timingSafeEqual(left, right)) return null
-  try { const session = JSON.parse(Buffer.from(payload, 'base64url').toString()) as AuthenticatedUser & { exp: number }; return session.exp > Date.now() ? { email: session.email, name: session.name } : null } catch { return null }
+  try {
+    const session = JSON.parse(Buffer.from(payload, 'base64url').toString()) as Partial<AuthenticatedUser & { exp: number }>
+    if (typeof session.email !== 'string' || typeof session.exp !== 'number' || session.exp <= Date.now()) return null
+    return { email: session.email.toLowerCase(), name: typeof session.name === 'string' ? session.name : session.email }
+  } catch { return null }
 }
 
 export async function authenticate(request: Request): Promise<AuthenticatedUser | Response> {

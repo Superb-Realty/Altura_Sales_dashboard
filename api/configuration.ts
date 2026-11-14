@@ -3,6 +3,7 @@ import { config } from 'dotenv'
 import { authenticate } from './auth-utils.js'
 
 config({ path: '.env.local', quiet: true })
+config({ quiet: true })
 
 async function handleConfigurationRequest(request: Request) {
   if (request.method !== 'GET') return new Response('Method not allowed', { status: 405, headers: { Allow: 'GET' } })

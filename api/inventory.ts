@@ -3,6 +3,7 @@ import { config } from 'dotenv'
 import { authenticate } from './auth-utils.js'
 
 config({ path: '.env.local', quiet: true })
+config({ quiet: true })
 type InventorySlice = { status: 'Booked' | 'EOI' | 'Blocked' | 'Open'; units: number; area: number }
 const number = (value: unknown) => Number(String(value ?? '').replace(/,/g, '')) || 0
 

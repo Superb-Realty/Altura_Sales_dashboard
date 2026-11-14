@@ -1,8 +1,12 @@
 {
   "name": "amber-dashboard-vercel",
-  "private": true,
   "version": "0.0.0",
+  "private": true,
+  "description": "The dashboard and `/api/sales` are protected by a verified Google ID token. Add these values to `.env.local` for local development and to the Vercel project environment variables for every deployed environment:",
+  "license": "ISC",
+  "author": "",
   "type": "module",
+  "main": "index.js",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",

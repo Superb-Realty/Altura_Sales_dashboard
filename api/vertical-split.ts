@@ -3,6 +3,7 @@ import { config } from 'dotenv'
 import { authenticate } from './auth-utils.js'
 
 config({ path: '.env.local', quiet: true })
+config({ quiet: true })
 const number = (value: unknown) => Number(String(value ?? '').replace(/[% ,]/g, '')) || 0
 
 async function handleVerticalSplitRequest(request: Request) {
