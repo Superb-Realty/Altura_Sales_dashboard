@@ -20,9 +20,15 @@ async function handleEoiBookedRequest(request: Request) {
     const auth = new google.auth.JWT({ email, key, scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'] })
     const sheets = google.sheets({ version: 'v4', auth })
     const response = await sheets.spreadsheets.values.get({ spreadsheetId: sheetId, range: "'EOI_+_Booked_(last_6_Months)'!A2:C100" })
-    const byMonth = new Map((response.data.values ?? []).map((row) => [new Date(String(row[0])).getMonth(), { units: number(row[1]), area: number(row[2]) }]))
-    const labels = ['Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-    const rows = labels.map((month, index) => ({ month, units: byMonth.get(index + 3)?.units ?? 0, area: byMonth.get(index + 3)?.area ?? 0 }))
+    const rawRows = (response.data.values ?? []).filter((row) => row && row[0])
+    const parsedRows = rawRows.map((row) => {
+      const date = new Date(String(row[0]))
+      const timestamp = Number.isNaN(date.getTime()) ? 0 : date.getTime()
+      const month = String(row[0]).trim().split(' ')[0].slice(0, 3)
+      return { timestamp, month, units: number(row[1]), area: number(row[2]) }
+    })
+    parsedRows.sort((a, b) => a.timestamp - b.timestamp)
+    const rows = parsedRows.slice(-6).map(({ month, units, area }) => ({ month, units, area }))
     return Response.json({ rows }, { headers: { 'Cache-Control': 'private, no-store' } })
   } catch (error) { console.error('EOI + Booked request failed', error); return Response.json({ error: 'Unable to load EOI + Booked data.' }, { status: 502 }) }
 }
